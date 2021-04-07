@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+    <mapper namespace="com.spring.magicMall.basket.repository.IBasketMapper">
+    	  
+    	   <!-- 제품 db 매핑 -->
+		<resultMap id="product" type="com.spring.magicMall.adminProduct.model.ProductVO">
+			<id property="proNo" column="pro_no"/>
+			<result property="proPhoto" column="pro_photo"/>
+			<result property="proName" column="pro_name"/>
+			<result property="proSavedMoney" column="pro_saved_money"/>
+			<result property="proAmount" column="pro_amount"/>
+			<result property="proPrice" column="pro_price"/>
+			<result property="proMaker" column="pro_maker"/>
+			<result property="proBuyNum" column="pro_buy_num"/>
+			<result property="proDetail" column="pro_detail"/>
+			<result property="youtubeAdd" column="youtube_add"/>
+			<result property="proAmountRequest" column="pro_amount_request"/>
+			<result property="proRegDate" column="pro_reg_date"/>
+			<result property="category" column="category"/>
+		</resultMap>
+		
+		<!-- 장바구니 db 매핑  -->
+		 <resultMap id="basket" type="com.spring.magicMall.basket.model.BasketVO">
+			<id property="proNo" column="pro_no"/>
+			<id property="userNo" column="user_no"/>
+			<result property="shopOrAmount" column="shop_or_amount"/>
+		</resultMap>
+		
+		<!-- 장바구니+물품 조인 매핑 -->
+		<resultMap type="com.spring.magicMall.basket.model.ProBasVO" id="proBas">
+			<collection property="product" resultMap="product"/>
+			<collection property="basket" resultMap="basket"/>
+		</resultMap>
+		
+		<!-- 제품 삭제 시 전체인지 아닌지 구분 동적 sql -->
+		<sql id = "deleteCondition">
+			<if test="proNo == null"> 
+				WHERE user_no= #{userNo};
+			</if>
+			<if test="proNo!=null">
+				WHERE user_no=#{userNo} AND pro_no = #{proNo};			
+			</if>
+		</sql>
+		
+				
+		<!-- 장바구니 물품 조회 -->
+		<select id="allBasketPro" resultMap="proBas">
+			SELECT 
+			pro_photo,pro_name,pro_saved_money,pro_amount,pro_price,pro_maker,pro_buy_num,pro_detail,youtube_add,pro_amount_request,pro_reg_date,category,user_no,shop_or_amount,b.pro_no
+			FROM product a
+			INNER JOIN shop_basket b ON a.pro_no = b.pro_no
+			WHERE user_no = #{userNo};		
+		</select>
+		
+		<!-- 장바구니 물품 넣기 -->
+		<insert id="insertBasket">
+			INSERT INTO shop_basket VALUES(#{proNo},#{userNo},#{shopOrAmount});
+		</insert>
+		
+		<!-- 장바구니 수량 조정 -->
+		<update id="changetAmount">
+			UPDATE shop_basket set shop_or_amount = #{shopOrAmount}
+			WHERE user_no = #{userNo} AND pro_no=#{proNo};
+		</update>
+		
+		<!-- 장바구니 물품 삭제 -->
+		<delete id="deleteBasket">
+			DELETE FROM shop_basket
+			<include refid="deleteCondition"/>	
+		</delete>
+		
+
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		
+		</mapper>

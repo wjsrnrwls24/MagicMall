@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+    <mapper namespace="com.spring.magicMall.adminProduct.repository.IProductMapper">
+    	  
+    	   <!-- db와 필드 매핑 -->
+		<resultMap id="resultMap" type="com.spring.magicMall.adminProduct.model.ProductVO">
+			<id property="proNo" column="pro_no"/>
+			<result property="proPhoto" column="pro_photo"/>
+			<result property="proName" column="pro_name"/>
+			<result property="proSavedMoney" column="pro_saved_money"/>
+			<result property="proAmount" column="pro_amount"/>
+			<result property="proPrice" column="pro_price"/>
+			<result property="proMaker" column="pro_maker"/>
+			<result property="proBuyNum" column="pro_buy_num"/>
+			<result property="proDetail" column="pro_detail"/>
+			<result property="youtubeAdd" column="youtube_add"/>
+			<result property="proAmountRequest" column="pro_amount_request"/>
+			<result property="proRegDate" column="pro_reg_date"/>
+			<result property="category" column="category"/>
+		</resultMap>
+		
+		<!-- 중복되는 동적SQL문에 대한 처리 -->
+		
+	<!-- 높은 가격 낮은 가격 동적sql -->
+	<sql id = "priceSet">
+		<if test="priceSet == null or priceSet == ''"> 
+			ORDER BY pro_no DESC
+		</if>
+		<if test="priceSet=='lowestPrice'">
+			ORDER BY pro_price ASC		
+		</if>
+		<if test="priceSet=='highestPrice'">
+			ORDER BY pro_price DESC			
+		</if>
+	</sql>
+	
+	<!-- 카테고리 sql -->
+	<sql id="categoryOp">
+		<if test="!(category==null or category=='') and !(condition=='' or condition==null)">
+			and category =#{category}						
+		</if>
+		<if test="!(category==null or category=='') and (condition==null or condition=='')">
+			WHERE category =#{category}
+		</if>	
+	</sql>
+	
+	<!-- 상세검색 설정  -->
+	<sql id="detailFind">
+		<if test="!((highPrice==null and lowPrice==null) or (highPrice.toString().equals('0') and lowPrice.toString().equals('0')))">
+			and pro_price BETWEEN #{lowPrice} and #{highPrice}
+		</if>	
+	</sql>
+	
+	
+	<!-- 관리자,유저 제품 일반 검색 기능,상세에도 사용 -->
+	<sql id = "search">		
+		<if test="condition == 'proName'"> 
+			WHERE pro_name LIKE CONCAT('%',#{keyword},'%')
+		</if>
+		<if test="condition == 'proMaker'">
+			WHERE pro_maker LIKE CONCAT('%',#{keyword},'%')
+		</if>
+	</sql>
+	
+	<!-- 제품 재고 변경 및 주문 횟수 변경 sql -->
+	<sql id = "proAmountAndBuyNumSql">		
+		<if test="orderStat == null"> 
+			SET pro_amount=pro_amount-#{orAmount},pro_buy_num = pro_buy_num+#{orAmount}
+		</if>
+		<if test="orderStat == 0">
+			SET pro_amount=pro_amount+#{orAmount},pro_buy_num = pro_buy_num-#{orAmount}
+		</if>
+		<if test="orderStat == 6">
+			SET pro_amount=pro_amount-#{orAmount}
+		</if>
+		<if test="orderStat == 7">
+			SET pro_buy_num = pro_buy_num-#{orAmount}
+		</if>
+	</sql>
+	
+	<!-- 관리자 재고 요청 및 잘팔린 물건들 보여주기 및 재고 부족 물품 보여주는 sql -->
+	<sql id = "proRequestAndMostSale">
+		<if test="condition=='request'">
+			WHERE pro_amount_request != 0
+			ORDER BY pro_no DESC;
+		</if>
+		<if test="mostSale=='yes'">
+			ORDER BY pro_buy_num DESC;
+		</if>
+		<if test="condition=='lack'">
+			WHERE pro_amount &lt;=5
+			ORDER BY pro_no DESC;
+		</if>
+		<if test="condition==null and keyword==null and mostSale==null">
+			ORDER BY pro_no DESC
+		</if>	
+	</sql>
+	
+	<!-- 관리자 제품 목록 조회하는 sql -->
+	<sql id = "adminProductList">
+		<if test="condition=='proName'">
+			WHERE pro_name LIKE CONCAT('%',#{keyword},'%')
+			ORDER BY pro_no DESC		
+		</if>
+		<if test="mostSale=='mostSale'">
+			ORDER BY pro_buy_num DESC
+		</if>
+		<if test="(condition==null and keyword==null and mostSale== null)or(condition=='' and mostSale=='' and keyword=='')">
+			ORDER BY pro_no DESC
+		</if>	
+	</sql>
+	
+		
+		<!-- 제품을 저장 -->
+		<insert id="insertPro">
+		INSERT INTO product(category,pro_photo,pro_name,pro_saved_money,pro_amount
+							,pro_price,pro_maker,pro_detail,youtube_add)
+		VALUES(#{category},#{proPhoto},#{proName},#{proSavedMoney},#{proAmount},
+				#{proPrice},#{proMaker},#{proDetail},#{youtubeAdd});
+		</insert>
+		
+		<!-- 제품 번호만 가져오기 -->
+		<select id="proNoGet" resultType="int">
+			SELECT pro_no FROM product;		
+		</select>
+    
+    	<!-- 메인 화면 제품 보여주는 sql -->
+    	<select id="selectAllPro" resultMap="resultMap">
+    		SELECT * FROM product
+    		<include refid="proRequestAndMostSale"/>
+    	 </select>
+    	 
+    	 <!-- 관리자 제품 전체 조회 -->
+    	 <select id="selectProsAdmin" resultMap="resultMap">
+    	 	SELECT * FROM product
+    	 	<include refid="adminProductList"/>
+    	 	Limit #{pageStart}, #{countPerPage}
+    	 </select>
+    	 
+    	<!-- 제품 수 새기 (관리자용) -->
+		<select id="countProductAdmin" resultType="int">
+			SELECT COUNT(*)
+			FROM product
+			<include refid="search"/>
+		</select>
+   
+     <!-- 총 판매량 보여주는 용 -->
+    	 <select id="selectMostSaleReal" resultMap="resultMap">
+    		 SELECT * FROM product
+			 ORDER BY pro_buy_num DESC
+			 LIMIT #{pageStart}, #{countPerPage}; 
+    	 </select>
+    	 
+    	 <!-- 개별 제품 조회 -->
+    	 <select id="selectOnePro" resultMap="resultMap">
+    		SELECT * FROM product
+			WHERE pro_no = #{proNo};    	 
+    	 </select>
+    	 
+    	 <!-- 제품 삭제 -->
+    	 <delete id="deletePro">
+    		DELETE FROM product
+			WHERE pro_no=#{proNo};
+    	  </delete>
+    	  
+    	<!-- 제품 수정 -->
+    	<update id="editPro">
+    		UPDATE product SET category = #{category},
+				pro_photo = #{proPhoto},
+				pro_name = #{proName},
+				pro_saved_money = #{proSavedMoney},
+				pro_amount = #{proAmount},
+				pro_price = #{proPrice},
+				pro_maker = #{proMaker},
+				pro_detail = #{proDetail},
+				youtube_add = #{youtubeAdd}
+			WHERE pro_no = #{proNo};    	
+    	</update>
+    	
+    	<!-- 유저 재고 요청 -->
+    	<update id="proAmountRe">
+    		UPDATE product SET pro_amount_request = pro_amount_request+1
+			WHERE pro_no=#{proNo};    	
+    	</update>
+    	
+    	<!-- 관리자 재고 처리 기능 -->
+    	<update id="proAmountReFin">
+    		UPDATE product SET pro_amount_request = 0
+			WHERE pro_no=#{proNo}    	
+    	</update>
+    	
+    	<!-- 제품 재고 및 상품 구매 수량 변경 -->
+    	<update id="proAmountAndBuyNum">
+    		UPDATE product 
+			<include refid="proAmountAndBuyNumSql"/>
+			WHERE pro_no = #{proNo}    	
+    	</update>
+    	
+    	<!-- 유저 제품 조회 (통합형)-->
+    	<select id="userProList" resultMap="resultMap">
+    		SELECT * FROM product
+			<include refid="search"/>
+			<include refid="categoryOp"/>
+			<include refid="detailFind"/>
+			<include refid="priceSet"/>
+			LIMIT #{pageStart}, #{countPerPage};
+    	</select>
+    	
+    	<!-- 유저 제품 수 세기(통합형) -->
+    	<select id="userProListCount" resultType="int">
+    		SELECT COUNT(*)
+			FROM product
+			<include refid="search"/>
+			<include refid="categoryOp"/>
+    	</select>
+    	    
+    </mapper>

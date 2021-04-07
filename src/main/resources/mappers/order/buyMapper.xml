@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+    
+     <mapper namespace="com.spring.magicMall.order.repository.IBuyMapper">
+     
+	   
+	   <!-- user table과 필드 매핑 -->
+		<resultMap id="user" type="com.spring.magicMall.user.model.UserVO">
+			<id property="userNO" column="user_no"/>
+			<result property="id" column="id"/>
+			<result property="password" column="password"/>
+			<result property="name" column="name"/>
+			<result property="email" column="email"/>
+			<result property="pNumber" column="p_number"/>
+			<result property="passCheckQuestion" column="pass_check_question"/>
+			<result property="passCheckAnswer" column="pass_check_answer"/>
+			<result property="regDate" column="reg_date"/>
+			<result property="savedMoney" column="saved_money"/>
+		</resultMap>
+		
+		<!-- 주소table 과 매핑 -->
+		<resultMap id="address" type="com.spring.magicMall.user.model.ExtraAddressVO">
+			<id property="addNo" column="add_no"/>
+			<result property="userNo" column="user_no"/>
+			<result property="addName" column="add_name"/>
+			<result property="address" column="address"/>
+		</resultMap>
+		
+		<!-- 유저+주소 조인 매핑 -->
+		<resultMap id="orderCombine" type="com.spring.magicMall.order.model.OrderCombineVO" >
+			<collection property="extraAdds" resultMap="address"/>
+			<collection property="users" resultMap="user"/>
+		</resultMap>
+		
+		<!-- orderInfo 테이블 매핑  -->
+		<resultMap id="orderInfo" type="com.spring.magicMall.order.model.OrderInfoVO">
+			<id property="orderNo" column="order_no"/>
+			<result property="userNo" column="user_no"/>
+			<result property="orderer" column="orderer"/>
+			<result property="orPhone" column="or_phone"/>
+			<result property="orAddress" column="or_address"/>
+			<result property="orEmail" column="or_email"/>
+			<result property="receiver" column="receiver"/>
+			<result property="ordate" column="or_date"/>
+		</resultMap>
+		
+		<!-- orderList 테이블 매핑 -->
+		<resultMap id="orderList" type="com.spring.magicMall.order.model.OrderListVO">
+			<id property="proNo" column="pro_no"/>
+			<id property="orderNo" column="order_no"/>
+			<result property="orAmount" column="or_amount"/>
+			<result property="orMessage" column="or_message"/>
+			<result property="shippingStat" column="shipping_stat"/>
+			<result property="orderStat" column="order_stat"/>
+		</resultMap>
+		
+		<!-- product 테이블 매핑 -->
+		<resultMap id="product" type="com.spring.magicMall.adminProduct.model.ProductVO">
+			<id property="proNo" column="pro_no"/>
+			<result property="proPhoto" column="pro_photo"/>
+			<result property="proName" column="pro_name"/>
+			<result property="proSavedMoney" column="pro_saved_money"/>
+			<result property="proAmount" column="pro_amount"/>
+			<result property="proPrice" column="pro_price"/>
+			<result property="proMaker" column="pro_maker"/>
+			<result property="proBuyNum" column="pro_buy_num"/>
+			<result property="proDetail" column="pro_detail"/>
+			<result property="youtubeAdd" column="youtube_add"/>
+			<result property="proAmountRequest" column="pro_amount_request"/>
+			<result property="proRegDate" column="pro_reg_date"/>
+			<result property="category" column="category"/>
+		</resultMap>
+		
+		<!-- orderList+orderInfo+product 매핑 -->
+		<resultMap id="OrderDetail" type="com.spring.magicMall.order.model.OrderDetailVO" >
+			<collection property="orderInfo" resultMap="orderInfo"/>
+			<collection property="orderList" resultMap="orderList"/>
+			<collection property="product" resultMap="product"/>
+		</resultMap>
+		
+		<!-- 주문 조회시 유저 비유저 구분 sql(관리자가 현재 주문중인 것도 확인 가능) -->
+		<sql id = "userOrNon">
+			<if test="userNo != null"> 
+				WHERE user_no = #{userNo}
+			</if>
+			<if test="userNo == null">
+				WHERE a.order_no = #{orderNo}			
+			</if>
+		</sql>
+		
+		<!-- 주문 조회시 검색 처리 sql-->
+		<sql id = "orderDetailSearch">
+			<if test="condition == null"> 
+			</if>
+			<if test="condition == 'proName'">
+				and pro_name LIKE CONCAT('%',#{keyword},'%')			
+			</if>
+		</sql>
+		
+		<!-- 일정 기간 주문 내역 조회 처리 sql -->
+		<sql id = "dateLength">
+			<if test="dateLength == null"> 
+			</if>
+			<if test="dateLength == '1week'">
+				AND or_date BETWEEN DATE_ADD(NOW(),INTERVAL-1 WEEK) AND NOW()			
+			</if>
+			<if test="dateLength == '1month'">
+				AND or_date BETWEEN DATE_ADD(NOW(),INTERVAL-1 MONTH) AND NOW()			
+			</if>
+			<if test="dateLength == '3month'">
+				AND or_date BETWEEN DATE_ADD(NOW(),INTERVAL-3 MONTH) AND NOW()			
+			</if>
+			<if test="dateLength == '12month'">
+				AND or_date BETWEEN DATE_ADD(NOW(),INTERVAL-12 MONTH) AND NOW()			
+			</if>			
+		</sql>
+		
+		<!-- 관리자 주문들의 주문 상태 확인 sql  -->
+		<sql id = "orderStatCheck">
+			<if test="condition=='cancel'">
+				WHERE order_stat = 0
+			</if>
+			<if test="condition=='buy'">
+				WHERE order_stat = 1
+			</if>		
+		</sql>
+		
+		<!-- 현재 주문상황 주문자로 검색 -->
+		<sql id = "ordererFind">
+			<if test="condition=='orderer'">
+				 WHERE order_stat = 1 AND orderer = #{keyword}
+			</if>
+			<if test="condition=='' or condition==null">
+				WHERE order_stat = 1
+			</if>
+		</sql>
+		
+		
+		
+		<!-- 유저 정보 호출 -->
+		<select id="userInfo" resultMap="orderCombine">
+			SELECT name,email,p_number,address,saved_money,a.user_no
+			FROM user a INNER JOIN extra_address b ON a.user_no = b.user_no
+			WHERE a.user_no = #{userNo} AND add_name = "기본 주소지"		
+		</select>
+		
+		<!-- orderInfo 저장 -->
+		<insert id="orderInfoSave">
+			INSERT INTO
+ 			order_info(order_no,user_no,orderer,or_phone,or_address,or_email,receiver)
+			VALUES(#{orderNo},#{userNo},#{orderer},#{orPhone},#{orAddress},#{orEmail},#{receiver});
+		</insert>
+		
+		<!-- orderList 저장 -->
+		<insert id="orderListSave">
+			INSERT INTO 
+			order_list(pro_no,order_no,or_amount,or_message,shipping_stat)
+			VALUES(#{proNo},#{orderNo},#{orAmount},#{orMessage},#{shippingStat});		
+		</insert>
+		
+		<!-- 주문 목록 및 주문 배송 조회 -->
+		<select id="orderListAndInfo" resultMap="OrderDetail">
+		SELECT
+			a.pro_no, a.order_no,user_no,orderer,or_phone,or_address,or_email,receiver,or_date
+			,or_amount,or_message,shipping_stat,order_stat,pro_photo,pro_name,pro_saved_money,pro_amount,pro_price,pro_maker,pro_buy_num,pro_detail,youtube_add,pro_amount_request,pro_reg_date,category
+			FROM order_list a
+			INNER JOIN order_info b ON b.order_no=a.order_no
+			INNER JOIN product c ON a.pro_no = c.pro_no
+			<include refid="userOrNon"/>
+			<include refid="orderDetailSearch"/>
+			<include refid="dateLength"/>
+			order by or_date DESC;		
+		</select>
+		
+		<!-- 관리자 주문 목록 조회 -->
+		<select id="orderListAndInfoAdmin" resultMap="OrderDetail">
+		SELECT
+			a.pro_no, a.order_no,user_no,orderer,or_phone,or_address,or_email,receiver,or_date
+			,or_amount,or_message,shipping_stat,order_stat,pro_photo,pro_name,pro_saved_money,pro_amount,pro_price,pro_maker,pro_buy_num,pro_detail,youtube_add,pro_amount_request,pro_reg_date,category
+			FROM order_list a
+			INNER JOIN order_info b ON b.order_no=a.order_no
+			INNER JOIN product c ON a.pro_no = c.pro_no
+			<include refid="ordererFind"/>
+			order by or_date DESC
+			LIMIT #{pageStart}, #{countPerPage}	
+		</select>
+		
+		<!-- 관리자 주문목록 수 세기 -->
+		<select id="countOrderListAndInfoAdmin" resultType="int">
+			SELECT COUNT(*)
+			FROM order_list a
+			INNER JOIN order_info b ON b.order_no=a.order_no
+			INNER JOIN product c ON a.pro_no = c.pro_no
+			<include refid="ordererFind"/>
+		</select>
+		
+		<!-- 주문 취소 현황 파악 -->
+		<select id="orderStatCheck" resultMap="OrderDetail">
+			SELECT
+			a.pro_no, a.order_no,user_no,orderer,or_phone,or_address,or_email,receiver,or_date
+			,or_amount,or_message,shipping_stat,order_stat,pro_photo,pro_name,pro_saved_money,pro_amount,pro_price,pro_maker,pro_buy_num,pro_detail,youtube_add,pro_amount_request,pro_reg_date,category
+			FROM order_list a
+			INNER JOIN order_info b ON b.order_no=a.order_no
+			INNER JOIN product c ON a.pro_no = c.pro_no
+			<include refid="orderStatCheck"/>
+			order by or_date desc;
+		</select>
+		
+		
+		<!-- orderStat 변경 -->
+		<update id="ordStatChange">
+			UPDATE order_list SET order_stat = #{orderStat} 
+			WHERE pro_no =#{proNo} and order_no = #{orderNo}
+		</update>
+		
+		<!-- 주문 정보 지우기 -->
+		<delete id="orderInfoDel">
+			DELETE FROM order_info
+			WHERE order_no = #{orderNo};		
+		</delete>
+		
+		<!-- 배송 정보 변경하기 -->
+		<update id="shippingStatChange">
+			UPDATE order_list SET shipping_stat = "배송완료"
+			WHERE order_no = #{orderNo} and pro_no =#{proNo};		
+		</update>
+		
+
+		
+		
+		
+		
+		
+		
+		</mapper>

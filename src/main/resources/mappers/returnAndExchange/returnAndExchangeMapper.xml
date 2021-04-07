@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+    
+     <mapper namespace="com.spring.magicMall.myPage.repository.IExchangeAndUserDropMapper">
+     
+     <!-- db와 필드 매핑 -->
+		<resultMap id="resultMap" type="com.spring.magicMall.myPage.model.ReturnExchangeVO">
+			<id property="orderNo" column="order_no"/>
+			<id property="proNo" column="pro_no"/>
+			<result property="userNo" column="user_no"/>
+			<result property="reExChoose" column="re_ex_choose"/>
+			<result property="reExAmount" column="re_ex_amount"/>
+			<result property="reExReason" column="re_ex_reason"/>
+			<result property="reExOrderer" column="re_ex_orderer"/>
+			<result property="reExEmail" column="re_ex_email"/>
+			<result property="reExPhoto" column="re_ex_photo"/>
+		</resultMap>
+		
+		<!-- productVO Mapping -->
+		<resultMap id="product" type="com.spring.magicMall.adminProduct.model.ProductVO">
+			<id property="proNo" column="pro_no"/>
+			<result property="proPhoto" column="pro_photo"/>
+			<result property="proName" column="pro_name"/>
+			<result property="proSavedMoney" column="pro_saved_money"/>
+			<result property="proAmount" column="pro_amount"/>
+			<result property="proPrice" column="pro_price"/>
+			<result property="proMaker" column="pro_maker"/>
+			<result property="proBuyNum" column="pro_buy_num"/>
+			<result property="proDetail" column="pro_detail"/>
+			<result property="youtubeAdd" column="youtube_add"/>
+			<result property="proAmountRequest" column="pro_amount_request"/>
+			<result property="proRegDate" column="pro_reg_date"/>
+			<result property="category" column="category"/>
+		</resultMap>
+		
+		<!-- orderInfo 테이블 매핑  -->
+		<resultMap id="orderInfo" type="com.spring.magicMall.order.model.OrderInfoVO">
+			<id property="orderNo" column="order_no"/>
+			<result property="userNo" column="user_no"/>
+			<result property="orderer" column="orderer"/>
+			<result property="orPhone" column="or_phone"/>
+			<result property="orAddress" column="or_address"/>
+			<result property="orEmail" column="or_email"/>
+			<result property="receiver" column="receiver"/>
+			<result property="ordate" column="or_date"/>
+		</resultMap>
+		
+		<!-- returnAndExchange+orderInfo+product 매핑 -->
+		<resultMap id="exchangeDetail" type="com.spring.magicMall.myPage.model.ReExInfoVO" >
+			<collection property="orderInfo" resultMap="orderInfo"/>
+			<collection property="returnExchange" resultMap="resultMap"/>
+			<collection property="product" resultMap="product"/>
+		</resultMap>
+		
+		
+		<!-- 반품 및 교환 등록 -->
+		<insert id="returnAndExchangeAdd">
+			INSERT INTO return_exchange(order_no,pro_no,user_no,
+			re_ex_choose,re_ex_amount,re_ex_reason,re_ex_orderer,re_ex_email,re_ex_photo)
+			VALUES(#{orderNo},#{proNo},#{userNo},#{reExChoose},#{reExAmount},#{reExReason},#{reExOrderer},#{reExEmail},#{reExPhoto});
+		</insert>
+		
+		<!-- 반품 및 교환 정보 가져오기 -->
+		<select id="reExInfo" resultMap="exchangeDetail">
+			SELECT 
+			a.order_no, 
+			a.pro_no,a.user_no,orderer,or_phone,or_address,or_email,receiver,or_date,	re_ex_choose,re_ex_amount,re_ex_reason,re_ex_orderer,re_ex_email,re_ex_photo,    pro_photo,pro_name,pro_saved_money,pro_amount,pro_price,pro_maker,pro_buy_num,pro_detail,youtube_add,pro_amount_request,pro_reg_date,category
+			FROM return_exchange a INNER JOIN order_info b ON a.order_no=b.order_no
+			INNER JOIN product c ON a.pro_no = c.pro_no
+			ORDER BY a.order_no DESC;		
+		</select>
+		
+		<!-- 반품 및 교환 내역 삭제 -->
+		<delete id="returnAndExchangeDel">
+			DELETE FROM return_exchange
+			WHERE order_no =#{orderNo} AND pro_no = #{proNo};
+		</delete>
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     
+     </mapper>

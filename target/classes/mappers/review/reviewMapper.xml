@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+    
+    <mapper namespace="com.spring.magicMall.product.repository.IReviewMapper">
+    	
+    	<!-- 리뷰 vo와 맵핑 -->
+    	<resultMap id="resultMap" type="com.spring.magicMall.product.model.ReviewVO">
+    		<id property="reviewNo" column="review_no"/>
+			<result property="proNo" column="pro_no"/>
+			<result property="reviewWriter" column="review_writer"/>
+			<result property="reviewContent" column="review_content"/>
+			<result property="reviewCompen" column="review_compen"/>
+		</resultMap>
+			
+			
+			<!-- 리뷰 저장 -->			
+			<insert id="addReview">
+				INSERT INTO review(pro_no,review_writer,review_content,review_compen) 
+				VALUES(#{proNo},#{reviewWriter},#{reviewContent},#{reviewCompen});
+			</insert>
+			
+			<!-- 리뷰 불러오기 -->
+			<select id="reviews" resultMap="resultMap">
+				SELECT *
+				FROM review
+				WHERE pro_no = #{proNo}
+				ORDER BY review_no DESC;
+			</select>
+    	
+    	
+    	
+    
+    
+    
+    
+    
+    
+    </mapper>
