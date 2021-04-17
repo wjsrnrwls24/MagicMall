@@ -11,6 +11,9 @@ public interface IBasketService {
 	//장바구니 물품 조회
 	List<ProBasVO> allBasketPro(int userNo);
 	
+	//개별 장바구니 물품 가져오기
+	ProBasVO basketPro(BasketVO basket);
+	
 	//장바구니 물품 삽입
 	void insertBasket(BasketVO basket);
 	

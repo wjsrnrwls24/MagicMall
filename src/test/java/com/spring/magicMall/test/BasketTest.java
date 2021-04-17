@@ -75,6 +75,16 @@ public class BasketTest {
 		System.out.println("add:"+orderCom.getExtraAdds().toString());
 	}
 	
+	@Test//개별 제품 조회
+	public void getPro() {
+		BasketVO basket = new BasketVO();
+		basket.setUserNo(7);
+		basket.setProNo(21);
+		ProBasVO probas = basketMap.basketPro(basket);
+		System.out.println("불러온 장바구니 값:"+probas.getBasket().toString());
+		System.out.println("불러온 제품 값:"+probas.getProduct().toString());
+	}
+	
 	
 
 }

@@ -8,6 +8,7 @@
 <head>
 <meta charset="UTF-8">
 	<title>구매 페이지</title>
+	<!-- 저장된 주소 고르기 -->
  <script type="text/javascript">
     
         var openWin;
@@ -22,6 +23,7 @@
         }
  
  </script>
+ <!-- 적립금 사용 -->
   <script type="text/javascript">
 	 function getCheckboxValue(event)  {
  	 	let result = '';
@@ -49,6 +51,7 @@
   	 = sum;
 }
  </script>
+   
 </head>
 <body>
 <c:if test="${userInfo.users.userNO==null}">
@@ -87,7 +90,7 @@
 		</c:if>
 		
 		<!-- 장바구니에서 구매 페이지로 -->
-		<c:if test="${checkNum==0}">
+		<c:if test="${checkNum==0||checkNum==2}">
 			<c:forEach var="basketPro" items="${basketPros}">
 				<tr class="table-light">
 					<td>
@@ -291,7 +294,7 @@
 	</form>
 	</c:if>
 	
-		<!-- 유저가 인데 장바구니 창에서 주문한 경우 주문자 정보 및 배송 정보 -->
+	<!-- 유저가 인데 장바구니 창에서 전체 주문한 경우 주문자 정보 및 배송 정보 -->
 	
 	<c:if test="${userInfo.users.userNO!=null&&checkNum==0}">
 		<form action="<c:url value='/buy/orderEx'/>" method="post">
@@ -385,6 +388,103 @@
 			</a>
 		</div>
 	</form>	
+</c:if>
+
+	<!-- 유저가 인데 장바구니 창에서 선택 주문한 경우 주문자 정보 및 배송 정보 -->
+	
+	<c:if test="${userInfo.users.userNO!=null&&checkNum==2}">
+	<form action="<c:url value='/buy/orderEx'/>" method="post">
+		<input type="hidden" name="userNo" value="${userInfo.users.userNO}" id="userNo">
+		<input type="hidden" name="proSavedMoney" value="${proSavedMoney}">
+		<input type="hidden" name="userSavedMoney" value="${userInfo.users.savedMoney}">
+		<input type="hidden" name="selCheck" value="1">
+		<table class="table">
+			<tr>
+				<td class="table-secondary"><span class="text-danger">*주문자 정보</span></td>
+				<td class="table-light"><input type="text" name="orderer" value="${userInfo.users.name}" class="form-control" style="width: 40%"></td>
+			</tr>
+			<tr>
+				<td class="table-secondary"><span class="text-danger">*이메일</span></td>
+				<td class="table-light"><input type="text" name="orEmail" value="${userInfo.users.email}" class="form-control" style="width: 40%"></td>
+			</tr>
+			<tr>
+				<td class="table-secondary"><span class="text-danger">*휴대전화 번호</span></td>
+				<td class="table-light"><input type="text" name="orPhone" value="${userInfo.users.pNumber}" class="form-control" style="width: 40%"></td>
+			</tr>
+			<tr>
+				<td class="table-secondary">사용할 적립금</td>
+				<td class="table-light">
+					<span id ="userSavedMoney" class="text-danger">
+						사용가능한 적립금 : ${userInfo.users.savedMoney}
+					</span>
+					<div class="form-check">
+						<input type="checkbox" value="1" name="moneyUseCheck" onclick='getCheckboxValue(event)' class="form-check-input" type="checkbox" checked>
+						<label class="form-check-label">적립금 사용하기</label>
+					</div>
+				</td>
+			</tr>
+		</table>
+		<br>
+		<div class="text-center"><h3>배송정보</h3></div><br>
+		<table class="table">
+			<tr>
+				<td class="table-secondary"><span class="text-danger">*수신자</span></td>
+				<td class="table-light"><input type="text" name="receiver" class="form-control" style="width: 40%"></td>
+			</tr>
+			<tr>
+				<td class="table-secondary"><span class="text-danger">*우편 번호</span></td>
+				<td class="table-light">
+					<div class="d-grid gap-2 d-md-flex">
+						<input type="text"name="add1" id="add1" value="${add1}" class="form-control" style="width: 20%">
+						<input type="button" onclick="execDaumPostcode()" value="우편 번호 찾기" class="btn btn-outline-info btn-sm">
+						<input type="button" value="주소지 고르기 " onclick="openAddressSel()" class="btn btn-outline-primary btn-sm">
+					</div>
+				</td>
+			</tr>
+			<tr>
+				<td class="table-secondary"><span class="text-danger">*기본 주소</span></td>
+				<td class="table-light"><input type="text"name="add2" id="add2" value="${add2}" class="form-control" style="width: 40%"></td>
+			</tr>
+			<tr>
+				<td class="table-secondary"><span class="text-danger">*상세 주소</span></td>
+				<td class="table-light"><input type="text"name="add3" id="add3" value="${add3}" class="form-control" style="width: 40%"></td>
+			</tr>
+			<tr>
+				<td class="table-secondary">주문 메세지</td>
+				<td class="table-light">
+					<textarea rows="8" name="orMessage" class="form-control">빠른 배송 부탁합니다</textarea>
+				</td>
+			</tr>
+		</table>
+		<div class="text-center"><h3>최종 결제 금액</h3></div>
+		<table class="table">
+			<tr class="table-secondary">
+				<td>상품 금액</td>
+				<td></td>
+				<td>배송비</td>
+				<td></td>
+				<td>적립금</td>
+				<td></td>
+				<td>결제 예정 금액</td>
+			</tr>
+			<tr class="table-light">
+				<c:set var="allPrice" value="${allPrice}"/>
+				<td><h4><div id ="price">${allPrice}</div>원</h4></td>
+				<td><span class="text-primary"><h4>+</h4></span></td>
+				<td><h4>2500원</h4></td>
+				<td><span class="text-danger"><h4>-</h4></span></td>
+				<td><h4><span id="result">${userInfo.users.savedMoney}</span></h4></td>
+				<td><span class="text-success"><h4>=</h4></span></td>
+				<td><h4><div class="text-danger"><span id="sum"><c:out value="${allPrice+2500-userInfo.users.savedMoney}"/></span>원</div></h4></td>
+			</tr>			
+		</table>
+		<div class="d-grid gap-2 d-md-flex justify-content-md-center">
+			<input type="submit" value="주문하기" class="btn btn-outline-success">
+			<a href="<c:url value='/user/main'/>">
+				<input type="button" value="취소하기" class="btn btn-outline-danger">
+			</a>
+		</div>
+		</form>
 </c:if>
 
 

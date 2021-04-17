@@ -1,5 +1,6 @@
 package com.spring.magicMall.basket.controller;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -8,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.objenesis.instantiator.basic.NewInstanceInstantiator;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -155,6 +157,50 @@ public class BasketController {
 		return"/order/orderPage";
 		
 		
+	}
+	
+	//장바구니 제품 선택 주문 하기
+	@GetMapping("/orderSel")
+	public String orderSel(@RequestParam("orderPros") String[] orderPros,
+							@RequestParam("userNo") int userNo,
+							Model model,HttpServletRequest request,HttpSession session) {
+		System.out.println("선택 주문 진입 성공");
+		int checkNum =2; 
+		BasketVO basket = new BasketVO();
+		List<ProBasVO> basketPros = new ArrayList<ProBasVO>();
+		basket.setUserNo(userNo);
+		
+
+		ArrayList<Integer> proList = (ArrayList)session.getAttribute("productlist");//세션 생성해서 해서 리스트 담기
+		if(proList==null){
+			proList = new ArrayList<Integer>();
+		     session.setAttribute("productlist",proList);
+		}
+		
+		
+		for(int i=0;i<orderPros.length;i++) {//해당하는 물품 집어넣기고 세션에 저장
+			basket.setProNo(Integer.parseInt(orderPros[i]));
+			System.out.println("basket"+i+"번째 값:"+basket.toString());
+			ProBasVO proBas = basService.basketPro(basket);
+			basketPros.add(proBas);
+			proList.add(proBas.getBasket().getProNo());
+			proList.add(proBas.getBasket().getShopOrAmount());
+		}
+		for(int i =0;i<proList.size();i++) {
+			System.out.println(i+"번째 proList "+proList.get(i));
+		}
+		
+		
+		OrderCombineVO userInfo = buyService.userInfo(userNo);
+		String[] addArray = userInfo.getExtraAdds().getAddress().split("-");//주소 나누기
+		model.addAttribute("add1",addArray[0]);
+		model.addAttribute("add2",addArray[1]);
+		model.addAttribute("add3",addArray[2]);
+		model.addAttribute("userInfo",userInfo);
+		model.addAttribute("basketPros",basketPros);
+		model.addAttribute("checkNum",checkNum);
+		System.out.println("정보 받음");
+		return"/order/orderPage";
 	}
 
 }

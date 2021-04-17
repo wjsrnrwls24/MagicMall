@@ -7,6 +7,37 @@
 <head>
 <meta charset="UTF-8">
 	<title>장바구니 페이지</title>
+
+<!-- 선택 주문 기능 -->
+<script>
+    function checkedOrder() {
+        var pro_length = document.getElementsByName("checkedPro").length;
+        var orderPros = [];
+        var count = 0;
+        var userNo = document.getElementById("userNo").value;
+        console.log(userNo);
+  		
+  			for (var i=0; i<pro_length; i++) {
+  	            if (document.getElementsByName("checkedPro")[i].checked == true) {
+  	                console.log(document.getElementsByName("checkedPro")[i].value);
+  	                console.log(typeof document.getElementsByName("checkedPro")[i].value);
+  	                orderPros[count]=document.getElementsByName("checkedPro")[i].value;
+  	                count++;
+  	            }
+  	        }
+  			if(count==0){
+  				alert("체크박스를 선택해주세요")
+  			}else{
+  				location.href="<c:url value='/basket/orderSel?orderPros='/>" + orderPros + "&userNo=" + userNo
+  			}
+  	        
+  	      
+  	   	
+  	    	
+  	}
+        
+</script>	
+	
 </head>
 <body>
 <jsp:include page ="../userHeader.jsp"/>
@@ -24,6 +55,7 @@
 	
 		<table class="table">
 			<tr class="table-primary">
+				<td></td>
 				<td>제품 사진</td>
 				<td>제품명</td>
 				<td><div class="text-center">수량</div></td>
@@ -34,6 +66,11 @@
 				
 					<c:forEach var="basketPro" items="${basketPros}">
 						<tr class="table-light">
+							<td>
+								<div class="form-check">
+									<input type="checkbox" name="checkedPro" value="${basketPro.product.proNo}" class="form-check-input">
+								</div>
+							</td>
 							<td>
 								<a href="<c:url value='/product?proNo=${basketPro.product.proNo}'/>">
 								<img src="${pageContext.request.contextPath}/resources/images/<c:out value='${basketPro.product.proPhoto}'/>" alt="사진이 없습니다" class="rounded" height="100" width="100">
@@ -80,11 +117,12 @@
 		</table>
 				<div class="d-grid gap-2 d-md-flex justify-content-md-center">
 					<form action="<c:url value='/basket/orderAll'/>" method="post">
-						<input type="hidden" value="${userNo}" name="userNo">
+						<input type="hidden" value="${userNo}" name="userNo" id="userNo">
 						<div class="col-auto">
 							<input type="submit" value="전체 주문" class="btn btn-outline-primary">
 						</div>
 					</form>
+					<input type="button" value="선택 주문" onclick="checkedOrder()" class="btn btn-outline-primary">
 					<form action="<c:url value='/basket/delete'/>" method="post">
 						<input type="hidden" value="${userNo}" name="userNo">
 						<div class="col-auto">

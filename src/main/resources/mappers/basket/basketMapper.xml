@@ -54,6 +54,16 @@
 			WHERE user_no = #{userNo};		
 		</select>
 		
+		<!-- 장바구니 특정 물품 조회 -->
+		<select id="basketPro" resultMap="proBas">
+			SELECT 
+			pro_photo,pro_name,pro_saved_money,pro_amount,pro_price,pro_maker,pro_buy_num,pro_detail,youtube_add,pro_amount_request,pro_reg_date,category,user_no,shop_or_amount,b.pro_no
+			FROM product a
+			INNER JOIN shop_basket b ON a.pro_no = b.pro_no
+			WHERE user_no = #{userNo} AND b.pro_no = #{proNo}			
+		</select>
+		
+		
 		<!-- 장바구니 물품 넣기 -->
 		<insert id="insertBasket">
 			INSERT INTO shop_basket VALUES(#{proNo},#{userNo},#{shopOrAmount});

@@ -1,5 +1,6 @@
 package com.spring.magicMall.order.controller;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -86,7 +87,8 @@ public class BuyController {
 						, @RequestParam("add3") String add3
 						, @RequestParam("proSavedMoney") int proSavedMoney
 						, @RequestParam("userSavedMoney") int userSavedMoney
-						, Model model) {
+						, Model model
+						, HttpServletRequest request) {
 		
 		System.out.println("orderList:"+orderList.toString());
 		System.out.println();
@@ -146,29 +148,60 @@ public class BuyController {
 					userService.addSavedMoney(user);
 					System.out.println("적립금 해결");
 				}
-				BasketVO delBasket = new BasketVO();
-				delBasket.setUserNo(orderInfo.getUserNo());
-				List<ProBasVO> basketPros = basService.allBasketPro(orderInfo.getUserNo());
-				System.out.println("값받음");
-				for(ProBasVO basketPro : basketPros) {	
-					System.out.println("basket:"+basketPro.getBasket().toString());
-					System.out.println();
-					System.out.println("product"+basketPro.getProduct().getProNo());
-					orderList.setProNo(basketPro.getProduct().getProNo());
-					OrderNumberMaker number = new OrderNumberMaker();
-					Integer	orderNo = Integer.parseInt(number.numberMaker(orderList.getProNo()));//주문번호 생성
-					orderList.setOrderNo(orderNo);
-					orderInfo.setOrderNo(orderNo);
-					orderInfo.setOrAddress(add1+"-"+add2+"-"+add3);
-					orderList.setShippingStat("배송중");
-					orderList.setOrAmount(basketPro.getBasket().getShopOrAmount());
-					System.out.println("장바구니 주문 밑 준비 완료");
-					buyService.orderInfoSave(orderInfo);
-					buyService.orderListSave(orderList);
-					proService.proAmountAndBuyNum(orderList);
-					System.out.println("장바구니 주문 완료");
+				if(money.getSelCheck()==1) {//선택 주문인 경우
+					System.out.println("선택 주문 진입");
+					HttpSession session = request.getSession();
+					ArrayList<Integer> proList = (ArrayList)session.getAttribute("productlist");
+					for(int i=0;i<proList.size();i=i+2) {//주문시작
+						System.out.println(i+"번째 주문시작");
+						System.out.println(i+"proList값:"+proList.get(i));
+						OrderNumberMaker number = new OrderNumberMaker();
+						orderList.setProNo(proList.get(i));
+						Integer orderNo = Integer.parseInt(number.numberMaker(orderList.getProNo()));//주문 번호 생성
+						orderList.setOrderNo(orderNo);
+						orderInfo.setOrderNo(orderNo);
+						orderInfo.setOrAddress(add1+"-"+add2+"-"+add3);
+						orderList.setShippingStat("배송중");
+						orderList.setOrAmount(proList.get(i+1));
+						System.out.println("밑 준비 완료");
+						buyService.orderInfoSave(orderInfo);
+						buyService.orderListSave(orderList);
+						proService.proAmountAndBuyNum(orderList);
+						System.out.println("주문 완료");
+						BasketVO basket = new BasketVO();
+						basket.setUserNo(orderInfo.getUserNo());
+						basket.setProNo(proList.get(i));
+						basService.deleteBasket(basket);
+						System.out.println("제품 삭제 완료");
+						session.removeAttribute("productlist");
+					}
+				}else {//선택 주문 아닌경우
+					System.out.println("장바구니 전체 주문 진입");
+					BasketVO delBasket = new BasketVO();
+					delBasket.setUserNo(orderInfo.getUserNo());
+					List<ProBasVO> basketPros = basService.allBasketPro(orderInfo.getUserNo());
+					System.out.println("값받음");
+					for(ProBasVO basketPro : basketPros) {	
+						System.out.println("basket:"+basketPro.getBasket().toString());
+						System.out.println();
+						System.out.println("product"+basketPro.getProduct().getProNo());
+						orderList.setProNo(basketPro.getProduct().getProNo());
+						OrderNumberMaker number = new OrderNumberMaker();
+						Integer	orderNo = Integer.parseInt(number.numberMaker(orderList.getProNo()));//주문번호 생성
+						orderList.setOrderNo(orderNo);
+						orderInfo.setOrderNo(orderNo);
+						orderInfo.setOrAddress(add1+"-"+add2+"-"+add3);
+						orderList.setShippingStat("배송중");
+						orderList.setOrAmount(basketPro.getBasket().getShopOrAmount());
+						System.out.println("장바구니 주문 밑 준비 완료");
+						buyService.orderInfoSave(orderInfo);
+						buyService.orderListSave(orderList);
+						proService.proAmountAndBuyNum(orderList);
+						System.out.println("장바구니 주문 완료");
+					}
+					basService.deleteBasket(delBasket);//장바구니 비우기					
 				}
-				basService.deleteBasket(delBasket);//장바구니 비우기				
+								
 			}
 		}
 		if(checkNum==0&&orderInfo.getUserNo()==null) {//비유저 성공
@@ -185,6 +218,7 @@ public class BuyController {
 		
 		
 	}
+	
 	
 	//배송지 고르기 페이지로
 	@GetMapping("/address")

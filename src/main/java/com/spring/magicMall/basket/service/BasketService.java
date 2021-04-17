@@ -21,6 +21,13 @@ public class BasketService implements IBasketService {
 		return mapper.allBasketPro(userNo) ;
 	}
 	
+	//개별 장바구니 물품 가져오기
+	@Override
+	public ProBasVO basketPro(BasketVO basket) {
+		
+		return mapper.basketPro(basket);
+	}
+	
 	//장바구니 물품 넣기
 	@Override
 	public void insertBasket(BasketVO basket) {
