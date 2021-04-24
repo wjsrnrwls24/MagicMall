@@ -44,6 +44,8 @@
 		}
 	</script>
 	
+
+	
 </head>
 <body>
 <c:if test="${userNo==null}">
@@ -76,7 +78,7 @@
 		<c:if test="${product.proAmount==0}"><span class='text-danger'>품절</span></c:if>
 		<c:if test="${product.proAmount==0}">
 		<form action="<c:url value='/product/amountReEx'/>" method="post">
-				<input type="hidden" value="${product.proNo}" name="proNo">
+				<input type="hidden" value="${product.proNo}" name="proNo" id="proNo">
 				<input type="submit" value="재고 요청" class="btn btn-outline-primary btn-sm">
 			</form>
 		</c:if><br>
@@ -85,6 +87,9 @@
 		<div class="d-grid gap-2 d-md-flex">
 			<c:if test="${userNo!=null}">
 				<input type="button" value="장바구니 추가" onclick="shopAdd()" class="btn btn-outline-secondary btn-sm"/>
+			</c:if>
+			<c:if test="${userNo==null}">
+				<input type="button" value="위시리스트 추가" id="addWishlist" class="btn btn-outline-secondary btn-sm"/>
 			</c:if>
 			<c:if test="${product.proAmount!=0}">
 				<input type="button" value="바로 구매" id="buy" onclick="order()" class="btn btn-outline-success btn-sm"/>
@@ -211,5 +216,38 @@
 		</table>
 	                  
 </div>
+	<!-- 비유저 위시리스트 추가 -->
+<script>
+(function() {
+	  var httpRequest;
+	  document.getElementById("addWishlist").addEventListener('click', makeRequest);
+
+	  function makeRequest() {
+	    httpRequest = new XMLHttpRequest();
+
+	    if(!httpRequest) {
+	      alert('XMLHTTP 인스턴스를 만들 수가 없어요 ㅠㅠ');
+	      return false;
+	    }
+	    httpRequest.onreadystatechange = alertContents;
+		httpRequest.open('GET', "${pageContext.request.contextPath}/wishlist/addList?proNo="+document.getElementById("proNo").value);
+	    httpRequest.send();
+
+	  }
+
+	  function alertContents() {
+	    if (httpRequest.readyState === XMLHttpRequest.DONE) {
+	      if (httpRequest.status === 200) {
+	    	  var result=httpRequest.responseText
+	    	  console.log(result)
+	    	 alert(result)
+	    	  }
+	       else {
+	        alert('request에 뭔가 문제가 있어요.');
+	      }
+	    }
+	  }
+	})();
+</script>
 </body>
 </html>

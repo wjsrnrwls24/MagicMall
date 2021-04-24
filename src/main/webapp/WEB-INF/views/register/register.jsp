@@ -99,7 +99,7 @@
 	
 	
 	
-<script>
+<script  charset="utf-8">
 (function() {
 	  var httpRequest;
 	  document.getElementById("idCheck").addEventListener('click', makeRequest);

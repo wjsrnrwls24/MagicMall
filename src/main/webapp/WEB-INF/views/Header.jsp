@@ -11,7 +11,7 @@ a { text-decoration:none }
 		<img src="${pageContext.request.contextPath}/resources/images/main/메인 페이지 마술사 아이콘.jpg" class="rounded mx-auto d-block" height="200" width="200" >
 	</a>
 	<div align="right">	
-		<a href="<c:url value='/user/login'/>">로그인</a>  <a href="<c:url value='/user/register'/>">회원가입</a> <a href="<c:url value='/userList'/>">  배송 조회</a>
+		<a href="<c:url value='/user/login'/>">로그인</a>  <a href="<c:url value='/user/register'/>">회원가입</a> <a href="<c:url value='/userList'/>">  배송 조회</a> <a href="<c:url value='/wishlist'/>">위시리스트</a>
 	</div><br>
 
 <nav class="navbar navbar-expand-lg navbar navbar-light" style="background-color: #e3f2fd;">
